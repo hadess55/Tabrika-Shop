@@ -1,4 +1,4 @@
-## Instaltion Guide
+## Instalation Guide
 
 - Clone this repository
 - run composer install
