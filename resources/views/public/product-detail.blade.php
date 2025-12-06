@@ -17,15 +17,13 @@
 
             <div class="flex items-center gap-3 justify-start md:justify-end">
                 <a href="{{ route('product.page') }}"
-                    class="px-4 py-2 rounded-full border border-orange-600 bg-orange-400 text-white
-                                      hover:bg-orange-600 hover:text-white transition">
+                    class="px-4 py-2 rounded-full border-orange-600 bg-orange-500 text-white
+                           hover:bg-orange-600 hover:text-white transition">
                     ← Kembali ke Daftar Produk
                 </a>
             </div>
         </div>
     </section>
-
-
 
     <section class="py-10">
         <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
@@ -47,8 +45,8 @@
                 </div>
             </div>
 
+ 
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-
 
                 <div>
                     <h2 class="text-xl font-semibold text-gray-900">
@@ -60,34 +58,61 @@
                 </div>
 
                 <div class="text-sm text-gray-700">
-                    <p>
-                        <span class="font-semibold text-gray-800">Ukuran:</span>
-                        <span class="ml-1">{{ $produk->ukuran ?? '-' }}</span>
-                    </p>
+                    <h3 class="text-sm font-semibold text-gray-800 mb-2">Pilihan Ukuran</h3>
+
+                    @if ($produk->size->count())
+                        <table class="w-full text-xs text-left border border-slate-200 rounded-lg overflow-hidden">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-3 py-2 border-b text-gray-600">Ukuran</th>
+                                    <th class="px-3 py-2 border-b text-gray-600">Stok</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($produk->size as $s)
+                                    <tr>
+                                        <td class="px-3 py-2 border-b">{{ $s->ukuran }}</td>
+                                        <td class="px-3 py-2 border-b">{{ $s->jumlah }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-xs text-gray-500">
+                            Belum ada data ukuran untuk produk ini.
+                        </p>
+                    @endif
                 </div>
 
-                {{-- Stok --}}
+     
+                @php
+                    $totalStok = $produk->total_stok;
+                @endphp
+
                 <div>
                     <span
                         class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                        @if ($produk->jumlahBarang == 0) bg-red-100 text-red-700
-                        @elseif($produk->jumlahBarang < 5)
-                            bg-yellow-100 text-yellow-700
-                        @else
-                            bg-green-100 text-green-700 @endif
-                    ">
-                        @if ($produk->jumlahBarang == 0)
+                            @if ($totalStok == 0)
+                                bg-red-100 text-red-700
+                            @elseif($totalStok < 5)
+                                bg-yellow-100 text-yellow-700
+                            @else
+                                bg-green-100 text-green-700
+                            @endif
+                        ">
+                        @if ($totalStok == 0)
                             Stok Habis
                         @else
-                            Stok: {{ $produk->jumlahBarang }}
+                            Total Stok: {{ $totalStok }}
                         @endif
                     </span>
                 </div>
 
+
                 <div class="pt-2 flex justify-end">
                     <button onclick="history.back()"
                         class="px-4 py-2 rounded-full border border-orange-600 text-orange-600
-                                      hover:bg-orange-600 hover:text-white transition">
+                               hover:bg-orange-600 hover:text-white transition">
                         Kembali
                     </button>
                 </div>

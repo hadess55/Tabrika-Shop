@@ -4,14 +4,14 @@
 
 @section('content')
 
-    <section class="py-10 bg-gradient-to-b from-orange-500 via-orange-400 to-slate-50 border-orange-200">
+    <section class="py-10 bg-gradient-to-b from-orange-400 via-orange-300 to-slate-50 border-orange-200">
         <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
 
             <div>
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
                     Semua <span class="text-white">Produk</span>
                 </h1>
-                <p class="mt-3 text-white text-sm leading-relaxed">
+                <p class="mt-3 text-gray-900 text-sm leading-relaxed">
                     Temukan semua produk yang tersedia pada sistem. Stok selalu terupdate secara otomatis dari dashboard
                     admin.
                 </p>
@@ -53,89 +53,111 @@
 
 
 
-    {{-- PRODUK GRID --}}
     <section class="pb-12">
-        <div class="max-w-6xl mx-auto px-4">
+    <div class="max-w-6xl mx-auto px-4">
 
-            @if ($produk->count())
+        @if ($produk->count())
 
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    @foreach ($produk as $item)
-                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                @foreach ($produk as $item)
+                    @php
+                        $totalStok = $item->total_stok; // dari accessor di model
+                    @endphp
 
-                            <div class="h-40 bg-slate-100 rounded-lg flex items-center justify-center mb-3">
-                                @if ($item->gambar)
-                                    <img src="{{ asset('storage/' . $item->gambar) }}" class="h-full object-contain"
-                                        alt="{{ $item->namaBarang }}">
-                                @else
-                                    <img src="{{ asset('logo/tabrika-logo.png') }}" class="h-full object-contain"
-                                        alt="logo">
-                                @endif
-                            </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition">
 
-                            <p class="text-xs text-slate-400 uppercase tracking-wide">{{ $item->kode }}</p>
+                        {{-- Gambar --}}
+                        <div class="h-40 bg-slate-100 rounded-lg flex items-center justify-center mb-3">
+                            @if ($item->gambar)
+                                <img src="{{ asset('storage/' . $item->gambar) }}"
+                                     class="h-full object-contain"
+                                     alt="{{ $item->namaBarang }}">
+                            @else
+                                <img src="{{ asset('logo/tabrika-logo.png') }}"
+                                     class="h-full object-contain"
+                                     alt="logo">
+                            @endif
+                        </div>
 
-                            <h3 class="font-semibold text-gray-900 text-sm mt-1">
-                                {{ $item->namaBarang }}
-                            </h3>
+                        {{-- Kode --}}
+                        <p class="text-xs text-slate-400 uppercase tracking-wide">
+                            {{ $item->kode }}
+                        </p>
 
-                            <p class="text-xs text-gray-600 mt-1">
-                                Ukuran: <span class="font-medium">{{ $item->ukuran }}</span>
-                            </p>
+                        {{-- Nama --}}
+                        <h3 class="font-semibold text-gray-900 text-sm mt-1">
+                            {{ $item->namaBarang }}
+                        </h3>
 
-                            <div class="mt-3 flex items-center justify-between">
-
-                                {{-- STOK BADGE --}}
-                                <span
-                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                                @if ($item->jumlahBarang == 0) bg-red-100 text-red-700
-                                @elseif($item->jumlahBarang < 5)
-                                    bg-yellow-100 text-yellow-700
-                                @else
-                                    bg-green-100 text-green-700 @endif
-                            ">
-                                    Stok: {{ $item->jumlahBarang }}
+                        {{-- Ukuran --}}
+                        <p class="text-xs text-gray-600 mt-1">
+                            Ukuran:
+                            @if ($item->size->count())
+                                <span class="font-medium">
+                                    {{ $item->size->pluck('ukuran')->join(', ') }}
                                 </span>
+                            @else
+                                <span class="font-medium text-gray-400">-</span>
+                            @endif
+                        </p>
 
+                        <div class="mt-3 flex items-center justify-between">
 
-                                <a href="{{ route('product.show', $item->id) }}"
-                                    class="px-3 py-1.5 text-xs rounded-full border border-orange-600 text-orange-600
+                            {{-- STOK BADGE (total semua size) --}}
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                    @if ($totalStok == 0)
+                                        bg-red-100 text-red-700
+                                    @elseif ($totalStok < 5)
+                                        bg-yellow-100 text-yellow-700
+                                    @else
+                                        bg-green-100 text-green-700
+                                    @endif
+                                ">
+                                Stok: {{ $totalStok }}
+                            </span>
+
+                            {{-- DETAIL --}}
+                            <a href="{{ route('product.show', $item->id) }}"
+                               class="px-3 py-1.5 text-xs rounded-full border border-orange-600 text-orange-600
                                       hover:bg-orange-600 hover:text-white transition">
-                                    Detail
-                                </a>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="px-6 py-4 border-t border-gray-100">
-                    <div class="flex items-center justify-between">
-                        <div class="text-xs text-gray-500">
-                            Menampilkan
-                            <span class="font-semibold">
-                                {{ $produk->firstItem() ?? 0 }}–{{ $produk->lastItem() ?? 0 }}
-                            </span>
-                            dari
-                            <span class="font-semibold">
-                                {{ $produk->total() }}
-                            </span>
-                            data
-                        </div>
-
-                        <div>
-                            {{ $produk->onEachSide(1)->links('vendor.pagination.simple-tailwind') }}
+                                Detail
+                            </a>
                         </div>
                     </div>
-                </div>
-            @else
-                <div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-gray-500">
-                    Tidak ada produk ditemukan.
-                </div>
+                @endforeach
+            </div>
 
-            @endif
+            {{-- PAGINATION --}}
+            <div class="mt-6 border-t border-gray-100 pt-4">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-gray-500">
+                    <div>
+                        Menampilkan
+                        <span class="font-semibold">
+                            {{ $produk->firstItem() ?? 0 }}–{{ $produk->lastItem() ?? 0 }}
+                        </span>
+                        dari
+                        <span class="font-semibold">
+                            {{ $produk->total() }}
+                        </span>
+                        produk
+                    </div>
 
-        </div>
-    </section>
+                    <div class="self-end md:self-auto">
+                        {{ $produk->onEachSide(1)->links('vendor.pagination.simple-tailwind') }}
+                    </div>
+                </div>
+            </div>
+
+        @else
+            <div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-gray-500">
+                Tidak ada produk ditemukan.
+            </div>
+        @endif
+
+    </div>
+</section>
+
 
 @endsection
 

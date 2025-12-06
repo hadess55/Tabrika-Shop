@@ -11,17 +11,22 @@ class LandingController extends Controller
     {
         $search = $request->get('search');
 
-        $produkQuery = Barang::query()
-            ->where('jumlahBarang', '>', 0);
+        $produkQuery = Barang::with('size')
+            ->whereHas('size', function ($q) {
+                $q->where('jumlah', '>', 0);
+            });
 
         if ($search) {
             $produkQuery->where(function ($q) use ($search) {
                 $q->where('kode', 'like', "%{$search}%")
-                  ->orWhere('namaBarang', 'like', "%{$search}%");
+                    ->orWhere('namaBarang', 'like', "%{$search}%");
             });
         }
 
-        $produk = $produkQuery->orderBy('namaBarang')->paginate(9)->withQueryString();
+        $produk = $produkQuery
+            ->orderBy('namaBarang')
+            ->paginate(9)
+            ->withQueryString();
 
         return view('home', compact('produk', 'search'));
     }

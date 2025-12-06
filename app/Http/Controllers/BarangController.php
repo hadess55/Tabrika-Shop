@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BarangController extends Controller
 {
@@ -11,23 +12,20 @@ class BarangController extends Controller
     {
         $search = $request->get('search');
 
-        $query = Barang::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('kode', 'like', "%{$search}%")
-                ->orWhere('namaBarang', 'like', "%{$search}%");
-            });
-        }
-
-        // 10 data per halaman
-        $barang = $query
-            ->latest()
+        $barang = Barang::with('size')
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q2) use ($search) {
+                    $q2->where('kode', 'like', "%{$search}%")
+                        ->orWhere('namaBarang', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('namaBarang', 'asc')
             ->paginate(5)
             ->withQueryString();
 
         return view('barang.index', compact('barang', 'search'));
     }
+
 
     public function create()
     {
@@ -36,53 +34,104 @@ class BarangController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'kode' => 'required',
-            'namaBarang' => 'required',
-            'ukuran' => 'required',
-            'jumlahBarang' => 'required|integer',
-            'gambar' => 'nullable|image|max:2048'
+        $validated = $request->validate([
+            'kode'       => 'required|string|max:100|unique:barang,kode',
+            'namaBarang' => 'required|string|max:255',
+            'gambar'     => 'nullable|image',
+            'ukuran.*'   => 'nullable|string|max:50',
+            'jumlah.*'   => 'nullable|integer|min:0',
         ]);
 
-        $data = $request->all();
+        $barang = Barang::create([
+            'kode'        => $validated['kode'],
+            'namaBarang'  => $validated['namaBarang'],
+            'gambar'      => $request->file('gambar')
+                ? $request->file('gambar')->store('gambar-barang', 'public')
+                : null,
+            'ukuran'       => null,
+            'jumlahBarang' => null,
+        ]);
 
-        if($request->hasFile('gambar')){
-            $data['gambar'] = $request->file('gambar')->store('barang', 'public');
+        $ukuranList = $request->input('ukuran', []);
+        $jumlahList = $request->input('jumlah', []);
+
+        foreach ($ukuranList as $index => $ukuran) {
+            if (!$ukuran && !isset($jumlahList[$index])) {
+                continue;
+            }
+
+            $barang->size()->create([
+                'ukuran' => $ukuran,
+                'jumlah' => $jumlahList[$index] ?? 0,
+            ]);
         }
 
-        Barang::create($data);
-
-        return redirect()->route('barang.index')->with('success', 'Data barang berhasil ditambahkan');
+        return redirect()->route('barang.index')
+            ->with('success', 'Barang berhasil ditambahkan.');
     }
 
     public function edit(Barang $barang)
     {
+        $barang->load('size');
         return view('barang.edit', compact('barang'));
     }
 
     public function update(Request $request, Barang $barang)
     {
-        $request->validate([
-            'kode' => 'required',
-            'namaBarang' => 'required',
-            'ukuran' => 'required',
-            'jumlahBarang' => 'required|integer',
-            'gambar' => 'nullable|image|max:2048'
+        $validated = $request->validate([
+            'kode'       => 'required|string|max:100|unique:barang,kode,' . $barang->id,
+            'namaBarang' => 'required|string|max:255',
+            'gambar'     => 'nullable|image',
+            'ukuran.*'   => 'nullable|string|max:50',
+            'jumlah.*'   => 'nullable|integer|min:0',
         ]);
 
-        $data = $request->all();
+        $ukuranList = $request->input('ukuran', []);
+        $jumlahList = $request->input('jumlah', []);
 
-        if($request->hasFile('gambar')){
-            if($barang->gambar){
-                unlink(storage_path('app/public/'.$barang->gambar));
-            }
-            $data['gambar'] = $request->file('gambar')->store('barang', 'public');
+
+        $totalStok = 0;
+        foreach ($jumlahList as $jml) {
+            $totalStok += (int) ($jml ?? 0);
         }
 
-        $barang->update($data);
+        $ukuranPertama = $ukuranList[0] ?? null;
 
-        return redirect()->route('barang.index')->with('success', 'Data barang berhasil diperbarui');
+
+        $gambarPath = $barang->gambar;
+        if ($request->hasFile('gambar')) {
+
+            if ($barang->gambar) {
+                Storage::disk('public')->delete($barang->gambar);
+            }
+            $gambarPath = $request->file('gambar')->store('gambar-barang', 'public');
+        }
+
+        $barang->update([
+            'kode'         => $validated['kode'],
+            'namaBarang'   => $validated['namaBarang'],
+            'gambar'       => $gambarPath,
+            'ukuran'       => $ukuranPertama,
+            'jumlahBarang' => $totalStok ?: null,
+        ]);
+
+        $barang->size()->delete();
+
+        foreach ($ukuranList as $index => $ukuran) {
+            if (!$ukuran && !isset($jumlahList[$index])) {
+                continue;
+            }
+
+            $barang->size()->create([
+                'ukuran' => $ukuran,
+                'jumlah' => $jumlahList[$index] ?? 0,
+            ]);
+        }
+
+        return redirect()->route('barang.index')
+            ->with('success', 'Barang berhasil diperbarui.');
     }
+
 
     public function updateJumlah(Request $request, Barang $barang)
     {
@@ -102,8 +151,8 @@ class BarangController extends Controller
 
     public function destroy(Barang $barang)
     {
-        if($barang->gambar){
-            unlink(storage_path('app/public/'.$barang->gambar));
+        if ($barang->gambar) {
+            unlink(storage_path('app/public/' . $barang->gambar));
         }
 
         $barang->delete();

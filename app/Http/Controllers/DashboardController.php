@@ -6,22 +6,28 @@ use App\Models\Barang;
 
 class DashboardController extends Controller
 {
+
     public function index()
     {
-        $totalJenisBarang = Barang::count();
-        $totalStokBarang  = Barang::sum('jumlahBarang');
-
-        $stokMenipis = Barang::where('jumlahBarang', '>', 0)
-                             ->where('jumlahBarang', '<', 5)
-                             ->count();
-
-        $stokHabis   = Barang::where('jumlahBarang', 0)->count();
+        $barang = Barang::with('size')->get();
 
 
-        $barangStokTerendah = Barang::where('jumlahBarang', '>', 0)
-                                    ->orderBy('jumlahBarang', 'asc')
-                                    ->take(5)
-                                    ->get();
+        $totalJenisBarang = $barang->count();
+
+        $totalStokBarang = $barang->sum('total_stok');
+
+        $stokMenipis = $barang
+            ->filter(fn($b) => $b->total_stok > 0 && $b->total_stok < 5)
+            ->count();
+
+        $stokHabis = $barang
+            ->filter(fn($b) => $b->total_stok === 0)
+            ->count();
+
+        $barangStokTerendah = $barang
+            ->filter(fn($b) => $b->total_stok > 0)
+            ->sortBy('total_stok')
+            ->take(5);
 
         return view('dashboard', compact(
             'totalJenisBarang',
