@@ -20,20 +20,46 @@
                     </button>
 
                     @if (request('search'))
-                        <a href="{{ route('barang.index') }}"
+                        <a href="{{ route('barang.index', ['filter' => request('filter')]) }}"
                            class="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
                             Reset
                         </a>
                     @endif
                 </form>
 
+
                 <a href="{{ route('barang.create') }}"
                    class="w-full md:w-auto text-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg shadow-sm transition">
                     + Tambah Barang
                 </a>
             </div>
+
+
+            <div class="w-full mt-2 flex flex-wrap items-center gap-2 text-xs">
+
+                @php $filter = request('filter'); @endphp
+
+                <a href="{{ route('barang.index', ['search' => request('search')]) }}"
+                   class="px-3 py-1 rounded-full border
+                          {{ !$filter ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                    Semua
+                </a>
+
+                <a href="{{ route('barang.index', ['search' => request('search'), 'filter' => 'menipis']) }}"
+                   class="px-3 py-1 rounded-full border
+                          {{ $filter === 'menipis' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                    Stok Menipis
+                </a>
+
+                <a href="{{ route('barang.index', ['search' => request('search'), 'filter' => 'habis']) }}"
+                   class="px-3 py-1 rounded-full border
+                          {{ $filter === 'habis' ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                    Stok Habis
+                </a>
+            </div>
         </div>
     </x-slot>
+
 
     <div class="px-4 md:px-8 py-6 max-w-7xl mx-auto sm:px-6 lg:px-8"
          x-data="{ showConfirm: false, deleteUrl: '' }">

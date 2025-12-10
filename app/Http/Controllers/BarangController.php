@@ -11,20 +11,35 @@ class BarangController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search');
+        $filter = $request->get('filter');
 
-        $barang = Barang::with('size')
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($q2) use ($search) {
-                    $q2->where('kode', 'like', "%{$search}%")
-                        ->orWhere('namaBarang', 'like', "%{$search}%");
-                });
-            })
+        $query = Barang::with('size')
+            ->withSum('size as total_stok', 'jumlah');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('kode', 'like', "%{$search}%")
+                    ->orWhere('namaBarang', 'like', "%{$search}%");
+            });
+        }
+
+
+        if ($filter === 'menipis') {
+
+            $query->having('total_stok', '>', 0)
+                ->having('total_stok', '<', 5);
+        } elseif ($filter === 'habis') {
+            $query->having('total_stok', '=', 0);
+        }
+
+        $barang = $query
             ->orderBy('namaBarang', 'asc')
             ->paginate(5)
             ->withQueryString();
 
-        return view('barang.index', compact('barang', 'search'));
+        return view('barang.index', compact('barang', 'search', 'filter'));
     }
+
 
 
     public function create()
