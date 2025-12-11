@@ -67,7 +67,7 @@
 
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-2xl font-semibold text-gray-900">Produk Tersedia</h2>
+                    <h2 class="text-2xl font-semibold text-gray-900">Produk Terbaru</h2>
                 </div>
 
                 <div class="flex gap-2">
