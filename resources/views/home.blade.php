@@ -63,108 +63,99 @@
     </section>
 
     <section id="produk" class="pb-10 max-w-6xl mx-auto">
-    @if ($produk->count())
+        @if ($produk->count())
 
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-2xl font-semibold text-gray-900">Produk Tersedia</h2>
-                <p class="text-sm text-gray-500 mt-1">Geser atau biarkan autoplay berjalan.</p>
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-900">Produk Tersedia</h2>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" onclick="scrollProdukCarousel(-1)"
+                        class="w-9 h-9 flex items-center justify-center rounded-full border border-slate-300
+                           text-slate-600 hover:bg-slate-100 transition">
+                        ‹
+                    </button>
+
+                    <button type="button" onclick="scrollProdukCarousel(1)"
+                        class="w-9 h-9 flex items-center justify-center rounded-full border border-slate-300
+                           text-slate-600 hover:bg-slate-100 transition">
+                        ›
+                    </button>
+                </div>
             </div>
 
-            <div class="flex gap-2">
-                <button type="button" onclick="scrollProdukCarousel(-1)"
-                    class="w-9 h-9 flex items-center justify-center rounded-full border border-slate-300
-                           text-slate-600 hover:bg-slate-100 transition">
-                    ‹
-                </button>
+            {{-- CAROUSEL --}}
+            <div id="produkCarousel"
+                class="flex gap-5 overflow-x-auto pb-2 scroll-smooth snap-x snap-mandatory whitespace-nowrap no-underline">
+                @foreach ($produk as $item)
+                    @php
+                        $totalStok = $item->total_stok; // dari accessor di model
+                    @endphp
 
-                <button type="button" onclick="scrollProdukCarousel(1)"
-                    class="w-9 h-9 flex items-center justify-center rounded-full border border-slate-300
-                           text-slate-600 hover:bg-slate-100 transition">
-                    ›
-                </button>
-            </div>
-        </div>
-
-        {{-- CAROUSEL --}}
-        <div id="produkCarousel"
-             class="flex gap-5 overflow-x-auto pb-2 scroll-smooth snap-x snap-mandatory whitespace-nowrap no-underline">
-            @foreach ($produk as $item)
-                @php
-                    $totalStok = $item->total_stok; // dari accessor di model
-                @endphp
-
-                <div
-                    class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden 
+                    <div
+                        class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden 
                            w-64 sm:w-72 shrink-0 snap-start no-underline select-none hover:shadow-md transition">
 
-                    {{-- Gambar --}}
-                    <div class="h-40 bg-slate-100 flex items-center justify-center">
-                        @if ($item->gambar)
-                            <img src="{{ asset('storage/' . $item->gambar) }}"
-                                 class="h-full object-contain"
-                                 alt="{{ $item->namaBarang }}">
-                        @else
-                            <img src="{{ asset('logo/tabrika-logo.png') }}"
-                                 class="h-full object-contain"
-                                 alt="logo">
-                        @endif
-                    </div>
-
-                    {{-- Info --}}
-                    <div class="p-4">
-                        <p class="text-xs text-slate-400 uppercase tracking-wide">{{ $item->kode }}</p>
-
-                        <h3 class="font-semibold text-gray-900 text-sm mt-1">
-                            {{ $item->namaBarang }}
-                        </h3>
-
-                        {{-- Daftar ukuran --}}
-                        <p class="text-xs text-gray-500 mt-1">
-                            Ukuran:
-                            @if ($item->size->count())
-                                <span class="font-medium">
-                                    {{ $item->size->pluck('ukuran')->join(', ') }}
-                                </span>
+                        {{-- Gambar --}}
+                        <div class="h-40 bg-slate-100 flex items-center justify-center">
+                            @if ($item->gambar)
+                                <img src="{{ asset('storage/' . $item->gambar) }}" class="h-full object-contain"
+                                    alt="{{ $item->namaBarang }}">
                             @else
-                                <span class="font-medium text-gray-400">-</span>
+                                <img src="{{ asset('logo/tabrika-logo.png') }}" class="h-full object-contain"
+                                    alt="logo">
                             @endif
-                        </p>
+                        </div>
 
-                        {{-- Badge stok total + tombol detail --}}
-                        <div class="mt-3 flex items-center justify-between">
-                            <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                                    @if ($totalStok == 0)
-                                        bg-red-100 text-red-700
+                        {{-- Info --}}
+                        <div class="p-4">
+                            <p class="text-xs text-slate-400 uppercase tracking-wide">{{ $item->kode }}</p>
+
+                            <h3 class="font-semibold text-gray-900 text-sm mt-1">
+                                {{ $item->namaBarang }}
+                            </h3>
+
+                            {{-- Daftar ukuran --}}
+                            <p class="text-xs text-gray-500 mt-1">
+                                Ukuran:
+                                @if ($item->size->count())
+                                    <span class="font-medium">
+                                        {{ $item->size->pluck('ukuran')->join(', ') }}
+                                    </span>
+                                @else
+                                    <span class="font-medium text-gray-400">-</span>
+                                @endif
+                            </p>
+
+                            {{-- Badge stok total + tombol detail --}}
+                            <div class="mt-3 flex items-center justify-between">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                    @if ($totalStok == 0) bg-red-100 text-red-700
                                     @elseif($totalStok < 5)
                                         bg-yellow-100 text-yellow-700
                                     @else
-                                        bg-green-100 text-green-700
-                                    @endif">
-                                Stok: {{ $totalStok }}
-                            </span>
+                                        bg-green-100 text-green-700 @endif">
+                                    Stok: {{ $totalStok }}
+                                </span>
 
-                            <a href="{{ route('product.show', $item->id) }}"
-                                class="px-3 py-1.5 text-xs rounded-full border border-orange-600 text-orange-600
+                                <a href="{{ route('product.show', $item->id) }}"
+                                    class="px-3 py-1.5 text-xs rounded-full border border-orange-600 text-orange-600
                                        hover:bg-orange-600 hover:text-white transition">
-                                Detail
-                            </a>
+                                    Detail
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="mt-4 text-xs text-slate-500">
-            Menampilkan {{ $produk->total() }} produk yang tersedia.
-        </div>
-    @else
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center text-sm text-gray-500">
-            Belum ada produk dengan stok tersedia. Silakan tambahkan barang dari dashboard admin.
-        </div>
-    @endif
-</section>
+                @endforeach
+            </div>
+        @else
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center text-sm text-gray-500">
+                Belum ada produk dengan stok tersedia. Silakan tambahkan barang dari dashboard admin.
+            </div>
+        @endif
+    </section>
 
 
     {{-- SECTION CTA BAWAH --}}
